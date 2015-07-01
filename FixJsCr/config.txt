@@ -1,0 +1,14 @@
+﻿;!@Install@!UTF-8!
+Title="Fix Javascript Error and Crystal Report ActiveX by W00N IT Sakaeo."
+BeginPrompt="แก้ไขปัญหา
+- IE,ActiveX ,Crystal Report,Javascript Error,Auto install MySQL ODBC Driver,Auto Create ODBC
+- Support Client/Server
+- เพิ่มไอคอนโปรแกรมสำหรับเครื่องลูก
+- เพิ่มไอคอนโปรแกรมกรณีเครื่องติดตั้งโปรแกรมแล้ว (ทั้งแบบ standalone และ แบบ Client/server)"
+CancelPrompt="คุณต้องการยกเลิกการแก้ไขปัญหาอัติโนมัตินี้ ตอนนี้?"
+ErrorTitle="ผิดพลาด"
+WarningTitle="ตรวจสอบ"
+ExtractCancelText="ต้องการยกเลิก?"
+Directory=""
+RunProgram="fixjscr.bat"
+;!@InstallEnd@!

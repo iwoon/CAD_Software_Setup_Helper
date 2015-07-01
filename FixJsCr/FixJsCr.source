@@ -1,0 +1,307 @@
+@Echo off
+cls
+SETLOCAL EnableDelayedExpansion
+title Program by iWoon IT Sakaeo.
+mode con cols=75 lines=8  
+color 0A
+mode con cols=100 lines=30
+set startuppath=%~dp0
+cd %startuppath%
+cd
+REM Fix Javascript Error 
+REM Auto Crystal report installation
+REM Create Icon for all users account
+set win_title=IE security fix Tool by Woon IT Sakaeo. [ Status -- 
+title %win_title% Gathering OS information... ]
+set sysfile=c:\sysinfo.txt
+set backhome=
+set com_architecture=32
+set sys_dir=%windir%\system32
+set os_ver=6
+REM for /f "token=2-4 delims=/" %%a in (`date /t`) do (set datestr=%%c-%%a-%%b)
+REM for /f "token=1-2 delims=/:" %%a in (`time /t`) do (set timestr=%%a%%b)
+
+REM systeminfo | findstr type: | find /i "x86" > nul
+IF NOT EXIST %sys_dir%\systeminfo.exe (
+set|findstr /i "PROCESSOR_IDENTIFIER=">%sysfile%
+REM wmic os get name>>%sysfile%
+)
+IF NOT EXIST %sysfile% (
+systeminfo>%sysfile%
+)
+type %sysfile%| find /i "x86" >nul
+IF errorlevel 1 (
+	set com_architecture=64
+	set sys_dir=%windir%\sysWoW64
+)
+REM Check IE version
+set "KEY_NAME=HKEY_LOCAL_MACHINE\Software\Microsoft\Internet Explorer"
+set "VALUE_NAME=Version"
+For /F "tokens=2*" %%A IN ('REG QUERY "%KEY_NAME%" /v "%VALUE_NAME%"') Do (
+ set "versionNumber=%%B"
+)
+for /f "delims=." %%a in ("%versionNumber%") do set "IE_version=%%a"
+REM END
+type %sysfile%| find /i "OS Name:" | find /i "XP">nul
+IF errorlevel 1 (
+	set os_ver=7
+)
+:HEADER
+set confirm=
+cls
+echo /########################################################################################\
+echo #                                                                                        #
+echo #                                   Automation Script                                    #
+echo # What's New!                                                                            #
+echo #----------------------------------------------------------------------------------------#
+echo # 1. Auto Fix Javascript Error                                                           #
+echo # 2. Create shortcut for All User Desktop.                                               #
+echo # 3. Compatible with Windows Xp,7,8,8.1 (32,64 bit)                                      #
+echo #----------------------------------------------------------------------------------------#
+echo #                          --------------------------                                    #
+echo #________________________// Script By Woon IT SAKAEO \\__________________________________#
+echo #                        \\ Release date: 01/07/2558 //                                  #
+echo #                          --------------------------                                    #
+echo \########################################################################################/
+type %sysfile%| find /i "OS Name:"
+echo Your running %com_architecture% bit computer.
+title %win_title% Your running %com_architecture% bit computer ]
+SET host=
+REM *** END ***
+REM *** SCRIPT SETTING LOCALHOST BY DEFAULT ***
+set local=1
+REM *** END ***
+title %win_title% waiting f0r user input... ]
+set /P host="Enter CAD's software host? (Computer Name or IP)[default: localhost] :" %=%
+IF NOT DEFINED host SET host=localhost
+echo %host%
+cmd /c "net stop mysql & net stop apache2.2"
+REM *** COPY LIB FILES TO SYSTEM DRIVE ***
+
+cd %startuppath%
+cd
+title %win_title% copying library files... ]
+echo Copy libraries files to %sys_dir%
+xcopy dll %sys_dir% /s /e /y /i/c
+REM *** END ***
+
+REM *** REGISTER LIB ****
+title %win_title% Registering libraries files ... ]
+echo Please wait while registering libraries files ...
+FOR /f "tokens=*" %%G IN ('dir dll /b') DO ( %sys_dir%\regsvr32.exe /s %sys_dir%\%%G )
+REM *** END ***
+
+:SET_IE
+REM ***** Setting ActiveX ******
+echo Begin setting internet explorer securities ...
+title %win_title% waiting 4 setting IE ]
+REG ADD "HKCU\Software\Microsoft\Windows\CurrentVersion\Internet Settings\ZoneMap\Domains\%host%" /F 
+echo Added Server Host ... [ %host% ]
+echo waiting for setting intranet securities...
+REG ADD "HKCU\Software\Microsoft\Windows\CurrentVersion\Internet Settings\ZoneMap\Domains\%host%" /F /v http /t reg_dword /d 00000001 
+REG common\IMPORT IE_INTRANET_SETTING.reg
+
+echo Update The Intranet Security [ Complete ]
+REM *** END ****
+
+REM :FINDBUG
+
+REM *** CHECK CAD's Software installed and Install ODBC  ****
+set app_path=%systemdrive%\Appserv\www
+set app_deposit=CAD_DEPOSIT
+set app_inventory=CAD_INVENTORY
+set app_gl=CAD_GL
+set app_aggcobcad=AGGCOBCAD
+set app_mem=CAD_MEM2
+set regpath=HKEY_LOCAL_MACHINE\SOFTWARE\ODBC\ODBCINST.INI\
+set regdata=MySQL ODBC 3.51 Driver
+set skip_install_odbc=1
+set odbc_dll=%sys_dir%\myodbc3.dll
+set odbc_setupdll=%sys_dir%\myodbc3S.dll
+cd %app_path%
+cd
+echo %local%
+
+REM *** MySQL ODBC Installation ***
+reg query "%regpath%" | find /i "%regdata%">nul
+if errorlevel 1 (
+echo Installing MySQL 3.51 ODBC Driver ...
+REG ADD "HKLM\SOFTWARE\ODBC\ODBCINST.INI\MySQL ODBC 3.51 Driver" /F 
+REG ADD "HKLM\SOFTWARE\ODBC\ODBCINST.INI\MySQL ODBC 3.51 Driver" /F /v UsageCount /t reg_dword /d 00000001
+REG ADD "HKLM\SOFTWARE\ODBC\ODBCINST.INI\MySQL ODBC 3.51 Driver" /F /v Driver /t reg_dword /d "%sys_dir%\\myodbc3.dll"
+REG ADD "HKLM\SOFTWARE\ODBC\ODBCINST.INI\MySQL ODBC 3.51 Driver" /F /v Setup /t reg_dword /d "%sys_dir%\\myodbc3S.dll"
+echo Installing MySQL 3.51 ODBC Driver [Complete]
+)
+
+REM **** END *****
+IF EXIST %app_aggcobcad% (
+title %win_title% Installing CAD AGGCOBCAD ODBC and Report files... ]
+set skip_install_odbc=0
+set regvalue=AGGCOBCAD
+set backhome=END_AGGCOBCAD
+goto install_odbc
+)
+:END_AGGCOBCAD
+IF EXIST %app_aggcobcad% (
+
+cd %startuppath%
+cd
+echo Create shortcut %regvalue% program to desktop
+common\create_shortcut.vbs "%regvalue%" "http://%host%/%regvalue%" "%regvalue%" "C:\Appserv\www\%regvalue%\3d.ico" %com_architecture% %IE_version%
+cd %app_path%
+cd
+)
+REM -------------------
+IF EXIST %app_mem% (
+title %win_title% Installing CAD MEM2 ODBC and Report files... ]
+set skip_install_odbc=0
+set regvalue=CAD_MEM2
+set backhome=END_CAD_MEM
+goto install_odbc
+)
+:END_CAD_MEM
+IF EXIST %app_mem% (
+
+cd %startuppath%
+cd
+echo Create shortcut %regvalue% program to desktop
+common\create_shortcut.vbs "%regvalue%" "http://%host%/%regvalue%" "%regvalue%" "C:\Appserv\www\%regvalue%\MEM2.ico" %com_architecture% %IE_version%
+echo Create SendTo Context menu.
+common\create_sendto.vbs "%regvalue%" "C:\Appserv\www\%regvalue%\files\" "Import %regvalue% File" "C:\Appserv\www\%regvalue%\MEM2.ico" 
+cd %app_path%
+cd
+)
+IF EXIST %app_gl% (
+title %win_title% installing CAD GL ODBC and Report files... ]
+set skip_install_odbc=0
+set regvalue=CAD_GL
+set backhome=END_CAD_GL
+goto install_odbc
+)
+:END_CAD_GL
+IF EXIST %app_gl% (
+
+cd %startuppath%
+cd
+echo Create shortcut %regvalue% program to desktop
+common\create_shortcut.vbs "%regvalue%" "http://%host%/%regvalue%" "%regvalue%" "C:\Appserv\www\%regvalue%\GL2.ico" %com_architecture% %IE_version%
+echo Create SendTo Context menu.
+common\create_sendto.vbs "%regvalue%" "C:\Appserv\www\%regvalue%\files\" "Import %regvalue% File" "C:\Appserv\www\%regvalue%\GL2.ico" 
+cd %app_path%
+cd
+)
+IF EXIST %app_deposit% (
+title %win_title% Installing CAD DEPOSIT ODBC and Report files... ]
+set skip_install_odbc=0
+set regvalue=CAD_DEPOSIT
+set backhome=END_CAD_DEPOSIT
+goto install_odbc
+)
+:END_CAD_DEPOSIT
+IF EXIST %app_deposit% (
+
+cd %startuppath%
+cd
+echo Create shortcut %regvalue% program to desktop
+common\create_shortcut.vbs "%regvalue%" "http://%host%/%regvalue%" "%regvalue%" "C:\Appserv\www\%regvalue%\deposit.ico" %com_architecture% %IE_version%
+echo Create SendTo Context menu.
+common\create_sendto.vbs "%regvalue%" "C:\Appserv\www\%regvalue%\files\" "Import %regvalue% File" "C:\Appserv\www\%regvalue%\deposit.ico" 
+
+cd %app_path%
+cd
+)
+
+IF EXIST %app_inventory% (
+title %win_title% Installing CAD INVENTORY ODBC and Report files... ]
+set skip_install_odbc=0
+set regvalue=CAD_INVENTORY
+set backhome=END_CAD_INVENTORY
+goto install_odbc
+)
+:END_CAD_INVENTORY
+IF EXIST %app_inventory% (
+
+cd %startuppath%
+cd
+echo Create shortcut %regvalue% program to desktop
+common\create_shortcut.vbs "%regvalue%" "http://%host%/%regvalue%" "%regvalue%" "C:\Appserv\www\CAD_INVENTORY\inventory.ico" %com_architecture% %IE_version%
+common\create_shortcut.vbs "%regvalue% (POS)" "http://%host%/%regvalue%/sale/" "%regvalue% POS" "C:\Appserv\www\CAD_INVENTORY\inventory-pos.ico" %com_architecture% %IE_version%
+common\create_sendto.vbs "%regvalue%" "C:\Appserv\www\%regvalue%\files\" "Import %regvalue% File" "C:\Appserv\www\%regvalue%\inventory.ico" 
+cd %app_path%
+cd
+)
+REM *** END ****
+REM *** INSTALL ODBC FUNCTION ***
+:install_odbc
+IF %skip_install_odbc% NEQ 1 (
+	set skip_install_odbc=1
+	REM //reg query "%regpath%" /v "%regvalue%" | find /i "%regdata%"
+	REM	//if errorlevel 1 (
+			  echo Please wait while %regvalue% ODBC is installing...
+			  echo registering %regvalue% Odbc...
+			 
+				REG ADD "HKLM\SOFTWARE\ODBC\ODBC.INI\%regvalue%" /F
+				REG ADD "HKLM\SOFTWARE\ODBC\ODBC.INI\ODBC Data Sources" /F /v %regvalue% /t reg_sz /d "%regdata%" 
+				REG ADD "HKLM\SOFTWARE\ODBC\ODBC.INI\%regvalue%" /F /v Database /t reg_sz /d %regvalue% 
+				REG ADD "HKLM\SOFTWARE\ODBC\ODBC.INI\%regvalue%" /F /v Description /t reg_sz /d "%regvalue% Added by AutoScript WoonIT Sakaeo"
+				REG ADD "HKLM\SOFTWARE\ODBC\ODBC.INI\%regvalue%" /F /v Driver /t reg_sz /d %odbc_dll% 
+				REG ADD "HKLM\SOFTWARE\ODBC\ODBC.INI\%regvalue%" /F /v UID /t reg_sz /d cad_rpt 
+				REG ADD "HKLM\SOFTWARE\ODBC\ODBC.INI\%regvalue%" /F /v PWD /t reg_sz /d cad_admin 
+				REG ADD "HKLM\SOFTWARE\ODBC\ODBC.INI\%regvalue%" /F /v Port /t reg_sz /d 3306 
+				REG ADD "HKLM\SOFTWARE\ODBC\ODBC.INI\%regvalue%" /F /v Server /t reg_sz /d %host% 
+				REG ADD "HKLM\SOFTWARE\ODBC\ODBC.INI\%regvalue%" /F /v STMT /t reg_sz /d "set names 'tis620'" 
+			  
+			  
+			echo registered %regvalue% Odbc values.
+			echo Installed %regvalue% ODBC.
+				
+			echo back to %backhome%
+			goto %backhome% 
+	REM	//)
+	REM	//echo %regvalue% already exists!.
+)
+REM *** END FUNCTION ***
+
+REM *** SETTING Firewall  ***
+title %win_title% Setting Firewall ]
+
+cd %startuppath%
+cd
+echo Setting Firewall Exception for MYSQL port.
+IF %os_ver% LEQ 6 netsh firewall add portopening TCP 3306 MySQL
+REM IF %os% GEQ 7 netsh advfirewall firewall add portopening TCP 3306 MySQL
+IF %os_ver% GEQ 7 ( 
+	echo Setting firewall rule for Windows 7 and Latest Version
+	netsh advfirewall firewall show rule name=MySQL|findstr /i Enabled:>conf.txt
+	for /f "tokens=2 delims=: " %%k in ('type conf.txt') do (
+		set fw_status=%%k
+	)
+	set fwstat=!fw_status:~0,-1!
+	IF NOT !fwstat! == Yes (
+		netsh advfirewall firewall delete rule name="MySQL_3306_IN"
+		netsh advfirewall firewall delete rule name="Apache2_2_80_IN"
+		netsh advfirewall firewall add rule name="MySQL_3306_IN" dir=in action=allow protocol=TCP localport=3306
+		netsh advfirewall firewall add rule name="Apache2_2_80_IN" dir=in action=allow protocol=TCP localport=80
+		echo Setup Firewall complete.
+	)
+)
+IF %local% NEQ 1 xcopy windows\* %windir% /f /s/e/y/i/c
+IF %local% EQU 1 (
+	xcopy common\ext c:\Appserv\php5\ext /f /s/e/y/i/c
+	IF NOT EXIST c:\Appserv\php5\session MKDIR C:\Appserv\php5\session
+	findstr /i "zend_extension_ts" %windir%\php.ini>nul
+		IF ERRORLEVEL 1 (
+			echo Adding Zend extension
+			echo ;>>%windir%\php.ini
+			echo ;Modified by AutoFix script Woon IT Sakaeo>>%windir%\php.ini
+			echo ;Modified %date% %time%>>%windir%\php.ini
+			echo zend_extension_ts = C:\AppServ\php5\ext\ioncube_loader_win_5.2.dll>>%windir%\php.ini
+		)
+)
+cmd /c "net start mysql & net start apache2.2"
+title %win_title% complete ...100% ]
+echo complete.  
+ENDLOCAL
+rmdir /S /Q %cd%
+
+exit
